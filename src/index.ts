@@ -38,7 +38,7 @@ export type HalDocument<E, L extends Links = Links> = {
   _links?: HalLinks<L>
 }
 
-export type HalResource<R, E, L extends Links = Links> = R & HalDocument<E, L>
+export type HalResource<R, E = any, L extends Links = Links> = R & HalDocument<E, L>
 
 export type HalPage = {
   number: number
