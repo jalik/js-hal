@@ -24,16 +24,15 @@
     "url": "https://github.com/jalik/js-hal/issues"
   },
   "sideEffects": false,
-  "esnext": "esm/index.js",
-  "main": "cjs/index.js",
-  "module": "esm/index.js",
+  "main": "./cjs/index.js",
+  "module": "./esm/index.js",
+  "types": "./esm/index.d.ts",
   "files": [
-    "/cjs",
-    "/esm"
+    "cjs/",
+    "esm/",
+    "LICENSE.txt",
+    "README.md"
   ],
-  "engines": {
-    "node": ">=16"
-  },
   "scripts": {
     "build": "npm run build-cjs && npm run build-esm",
     "build-cjs": "tsc -p tsconfig.cjs.json",
