@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  createHalLink,
   createHalPagedResource,
   createHalPageLinks,
   createHalPageMetadata,
@@ -84,6 +85,20 @@ describe('HalResource', () => {
     it('should return undefined when "_links" is missing', () => {
       expect(getHalLink({ username: 'admin' }, 'self')).toBeUndefined()
     })
+
+    it('should return undefined when the requested link is missing', () => {
+      expect(getHalLink(doc, 'missing' as keyof UserLinks)).toBeUndefined()
+    })
+
+    it('should return multiple links for a relation', () => {
+      const links = [
+        { href: 'http://localhost/users/admin/roles/1' },
+        { href: 'http://localhost/users/admin/roles/2' }
+      ]
+      const resource = { _links: { roles: links } }
+
+      expect(getHalLink(resource, 'roles')).toStrictEqual(links)
+    })
   })
 })
 
@@ -152,6 +167,27 @@ describe('HalPagedResource', () => {
   })
 })
 
+describe('createHalLink', () => {
+  it('should include the href and optional attributes', () => {
+    expect(createHalLink('http://localhost/users/admin', {
+      title: 'Admin user',
+      type: 'application/json',
+      templated: false
+    })).toStrictEqual({
+      href: 'http://localhost/users/admin',
+      title: 'Admin user',
+      type: 'application/json',
+      templated: false
+    })
+  })
+
+  it('should include only the href when no attributes are provided', () => {
+    expect(createHalLink('http://localhost/users/admin')).toStrictEqual({
+      href: 'http://localhost/users/admin'
+    })
+  })
+})
+
 describe('createHalPageMetadata', () => {
   it('should calculate total pages when all pages are full', () => {
     expect(createHalPageMetadata(1, 10, 20)).toStrictEqual({
@@ -188,6 +224,16 @@ describe('createHalPageLinks', () => {
       first: { href: 'http://localhost/users?sort=name&page=1&size=10#results' },
       last: { href: 'http://localhost/users?sort=name&page=3&size=10#results' },
       next: { href: 'http://localhost/users?sort=name&page=2&size=10#results' }
+    })
+  })
+
+  it('should replace existing page and size parameters', () => {
+    expect(createHalPageLinks('http://localhost/users?page=9&size=100&sort=name#results', 2, 10, 3)).toStrictEqual({
+      self: { href: 'http://localhost/users?page=2&size=10&sort=name#results' },
+      first: { href: 'http://localhost/users?page=1&size=10&sort=name#results' },
+      last: { href: 'http://localhost/users?page=3&size=10&sort=name#results' },
+      prev: { href: 'http://localhost/users?page=1&size=10&sort=name#results' },
+      next: { href: 'http://localhost/users?page=3&size=10&sort=name#results' }
     })
   })
 
@@ -250,7 +296,7 @@ describe('createHalResource', () => {
   describe('with embedded and links', () => {
     const doc = createHalResource(user, embedded, links)
 
-    it('should return an HalResource', () => {
+    it('should return a HalResource', () => {
       expect(doc.username).toStrictEqual(user.username)
       expect(doc._embedded).toStrictEqual(embedded)
       expect(doc._links).toStrictEqual(links)
@@ -260,13 +306,29 @@ describe('createHalResource', () => {
   describe('without embedded and links', () => {
     const doc = createHalResource(user, undefined, undefined)
 
-    it('should return an HalResource', () => {
+    it('should return a HalResource', () => {
       expect(doc.username).toStrictEqual(user.username)
       expect(doc._embedded).toBeUndefined()
       expect(doc._links).toBeUndefined()
       expect(doc).not.toHaveProperty('_embedded')
       expect(doc).not.toHaveProperty('_links')
     })
+  })
+
+  it('should include embedded without links', () => {
+    const doc = createHalResource(user, embedded)
+
+    expect(doc._embedded).toStrictEqual(embedded)
+    expect(doc._links).toBeUndefined()
+    expect(doc).not.toHaveProperty('_links')
+  })
+
+  it('should include links without embedded', () => {
+    const doc = createHalResource(user, undefined, links)
+
+    expect(doc._embedded).toBeUndefined()
+    expect(doc._links).toStrictEqual(links)
+    expect(doc).not.toHaveProperty('_embedded')
   })
 })
 
@@ -290,7 +352,7 @@ describe('createHalPagedResource', () => {
       users: UserResource[]
     }>(embedded, page, baseUrl)
 
-    it('should return an HalPagedResource', () => {
+    it('should return a HalPagedResource', () => {
       expect(doc.page).toStrictEqual(page)
       expect(doc._embedded).toStrictEqual(embedded)
       expect(doc._links).toStrictEqual(createHalPageLinks(baseUrl, page.number, page.size, page.totalPages))
@@ -300,7 +362,7 @@ describe('createHalPagedResource', () => {
   describe('without links', () => {
     const doc = createHalPagedResource<{ users: UserResource[] }>(embedded, page, undefined)
 
-    it('should return an HalPagedResource', () => {
+    it('should return a HalPagedResource', () => {
       expect(doc.page).toStrictEqual(page)
       expect(doc._embedded).toStrictEqual(embedded)
       expect(doc._links).toBeUndefined()

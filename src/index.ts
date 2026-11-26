@@ -57,6 +57,15 @@ export type HalPagedResource<E = any> = HalResource<E, HalPageLinks> & {
 }
 
 /**
+ * Creates a HAL link.
+ * @param href
+ * @param attributes
+ */
+export function createHalLink (href: string, attributes?: Omit<HalLink, 'href'>): HalLink {
+  return { href, ...attributes }
+}
+
+/**
  * Creates a paged HAL resource.
  * @param embedded
  * @param page
@@ -80,7 +89,7 @@ export function createHalPagedResource<E> (embedded: E, page: HalPage, baseUrl?:
 }
 
 /**
- * Creates links for an HAL resource.
+ * Creates links for a HAL resource.
  * @param baseUrl
  * @param number
  * @param size
@@ -108,7 +117,7 @@ export function createHalPageLinks (
 }
 
 /**
- * Create a page metadata for an HAL resource.
+ * Create a page metadata for a HAL resource.
  * @param number
  * @param size
  * @param totalElements
@@ -123,7 +132,7 @@ export function createHalPageMetadata (number: number, size: number, totalElemen
 }
 
 /**
- * Creates an HAL resource.
+ * Creates a HAL resource.
  * @param resource
  * @param embedded
  * @param links
@@ -145,7 +154,7 @@ export function createHalResource<T, E, L extends Links = Links> (resource: T, e
 }
 
 /**
- * Returns embedded from an HAL resource.
+ * Returns embedded from a HAL resource.
  * @param resource
  */
 export function getHalEmbedded<T, E, L extends Links = Links> (resource: T & HalResource<E, L>): E | undefined {
@@ -153,7 +162,7 @@ export function getHalEmbedded<T, E, L extends Links = Links> (resource: T & Hal
 }
 
 /**
- * Returns links from an HAL resource.
+ * Returns links from a HAL resource.
  * @param resource
  */
 export function getHalLinks<T, E extends Record<string, unknown>, L extends Links = Links> (resource: T & HalResource<E, L>): L | undefined {
@@ -161,7 +170,7 @@ export function getHalLinks<T, E extends Record<string, unknown>, L extends Link
 }
 
 /**
- * Returns a specific link from an HAL resource.
+ * Returns a specific link from a HAL resource.
  * @param resource
  * @param link
  */
@@ -170,7 +179,7 @@ export function getHalLink<T, E, L extends Links = Links> (resource: T & HalReso
 }
 
 /**
- * Returns page from an HAL resource.
+ * Returns page from a HAL resource.
  * @param resource
  */
 export function getHalPage<T, E> (resource: T & HalPagedResource<E>): HalPage | undefined {
@@ -178,7 +187,7 @@ export function getHalPage<T, E> (resource: T & HalPagedResource<E>): HalPage | 
 }
 
 /**
- * Returns page number from an HAL resource.
+ * Returns page number from a HAL resource.
  * @param resource
  */
 export function getHalPageNumber<E> (resource: HalPagedResource<E>): number | undefined {
@@ -186,7 +195,7 @@ export function getHalPageNumber<E> (resource: HalPagedResource<E>): number | un
 }
 
 /**
- * Returns page size from an HAL resource.
+ * Returns page size from a HAL resource.
  * @param resource
  */
 export function getHalPageSize<E> (resource: HalPagedResource<E>): number | undefined {
@@ -194,7 +203,7 @@ export function getHalPageSize<E> (resource: HalPagedResource<E>): number | unde
 }
 
 /**
- * Returns total elements from an HAL resource.
+ * Returns total elements from a HAL resource.
  * @param resource
  */
 export function getHalPageTotalElements<E> (resource: HalPagedResource<E>): number | undefined {
@@ -202,7 +211,7 @@ export function getHalPageTotalElements<E> (resource: HalPagedResource<E>): numb
 }
 
 /**
- * Returns total pages from an HAL resource.
+ * Returns total pages from a HAL resource.
  * @param resource
  */
 export function getHalPageTotalPages<E> (resource: HalPagedResource<E>): number | undefined {
