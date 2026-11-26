@@ -11,9 +11,8 @@ H.A.L. (Hypertext Application Language) TypeScript declarations and functions.
 
 ## Features
 
-* Create HAL resources
-* Create HAL paginated resources
-* Consume HAL embedded data
+* Create HAL single resources and paginated resources
+* Consume HAL data
 * TypeScript declarations ♥
 
 ## Installing
@@ -21,82 +20,84 @@ H.A.L. (Hypertext Application Language) TypeScript declarations and functions.
 ```shell
 npm i -P @jalik/hal
 ```
+
 ```shell
 yarn add @jalik/hal
 ```
 
-## Creating an HAL resource
+## Creating a HAL resource
 
 ```ts
-import { createHalResource } from '@jalik/hal'
+import { createHalLink, createHalResource } from '@jalik/hal'
 
-const user = {
-  username: 'admin'
-}
-
-const roles = [
-  { name: 'administrator' }
-]
-
-// we can add links to roles (optional)
-const rolesResources = roles.map((role) => createHalResource(role, undefined, {
-  self: { href: `http://localhost/roles/${role.name}` }
-}))
+const user = { id: 1, username: 'admin' }
+const roles = [{ id: 1000, name: 'administrator' }]
 
 const embedded = {
-  roles: rolesResources
+  roles: roles.map((role) => createHalResource(role, undefined, {
+    // We can add links to roles (optional)
+    self: createHalLink(`http://localhost/api/roles/${role.id}`)
+  }))
 }
 
-const links = {
-  self: { href: 'http://localhost/users/admin' }
-}
+// Create a HAL resource.
+const resource = createHalResource(user)
 
-const resource = createHalResource(user, embedded, links)
+// Create a HAL resource with embedded.
+const resourceWithEmbedded = createHalResource(user, embedded)
+
+// Create a HAL resource with embedded and links.
+const resourceWithEmbeddedAndLinks = createHalResource(user, embedded, {
+  self: createHalLink(`http://localhost/api/users/${user.id}`)
+})
 ```
 
-## Creating an HAL paged resource
+`createHalLink(href, attributes?)` creates a link object. The optional attributes can include
+`title`, `type`, `name`, `profile`, `deprecation`, `hreflang`, and `templated`.
+
+## Creating a HAL paged resource
 
 ```ts
-import { createHalPagedResource } from '@jalik/hal'
+import {
+  createHalLink,
+  createHalPagedResource,
+  createHalPageLinks,
+  createHalPageMetadata,
+  createHalResource
+} from '@jalik/hal'
 
 const users = [
   { username: 'admin' },
   { username: 'john' }
 ]
 
-// we can add links to users (optional)
-const usersResources = users.map((user) => createHalResource(user, undefined, {
-  self: { href: `http://localhost/users/${user.username}` }
-}))
-
 const embedded = {
-  users: usersResources
+  users: users.map((user) => createHalResource(user, undefined, {
+    // we can add links to users (optional)
+    self: createHalLink(`http://localhost/users/${user.username}`)
+  }))
 }
 
-const page = {
-  number: 3,
-  size: 2,
-  totalElements: 10,
-  totalPages: 5
-}
+// Page numbers start at 1; size should be a positive number.
+const page = createHalPageMetadata(1, 2, 2)
 
-const links = {
-  first: 'http://localhost/users?p=1',
-  prev: 'http://localhost/users?p=2',
-  self: 'http://localhost/users?p=3',
-  next: 'http://localhost/users?p=4',
-  last: 'http://localhost/users?p=5',
-}
-
-const resource = createHalPagedResource(embedded, page, links)
+const baseUrl = 'http://localhost/users?page=9&sort=name'
+const links = createHalPageLinks(baseUrl, page.number, page.size, page.totalPages)
+// Existing page and size query parameters are replaced; other query parameters are preserved.
+const pagedResource = createHalPagedResource(embedded, page, baseUrl)
 ```
 
-## Getting the HAL embedded values
+When `baseUrl` is omitted, `createHalPagedResource` does not add `_links`. The URL must be absolute;
+other query parameters and the URL fragment are preserved when page links are created.
+
+## Getting the HAL embedded content
 
 ```ts
-import { getHalEmbedded } from '@jalik/hal'
+import { getHalEmbedded, type HalResource } from '@jalik/hal'
 
-const doc = {
+type UserHalResource = { username: string } & HalResource
+
+const doc: UserHalResource = {
   username: 'admin',
   _embedded: {
     roles: [
@@ -113,9 +114,11 @@ const embedded = getHalEmbedded(doc)
 ## Getting the HAL links
 
 ```ts
-import { getHalLinks } from '@jalik/hal'
+import { getHalLink, getHalLinks, type HalResource } from '@jalik/hal'
 
-const doc = {
+type UserHalResource = { username: string } & HalResource
+
+const doc: UserHalResource = {
   username: 'admin',
   _links: {
     self: { href: 'http://localhost/users/admin' }
@@ -124,26 +127,50 @@ const doc = {
 
 const links = getHalLinks(doc)
 // links = { self }
+
+const selfLink = getHalLink(doc, 'self')
+// selfLink = { href: 'http://localhost/users/admin' }
 ```
 
 ## Getting the HAL page information
 
 ```ts
-import { getHalPage } from '@jalik/hal'
+import {
+  getHalPage,
+  getHalPageNumber,
+  getHalPageSize,
+  getHalPageTotalElements,
+  getHalPageTotalPages,
+  type HalPagedResource,
+  type HalResource
+} from '@jalik/hal'
 
-const doc = {
+type UserHalResource = { username: string } & HalResource
+type UsersHalResource = HalPagedResource<{ users: UserHalResource[] }>
+
+const doc: UsersHalResource = {
   _embedded: { users: [] },
   page: {
     number: 1,
-    size: 0,
+    size: 10,
     totalElements: 0,
-    totalPages: 1
+    totalPages: 0
   }
 }
 
 const page = getHalPage(doc)
 // page = { number, size, totalElements, totalPages }
+
+const pageNumber = getHalPageNumber(doc)
+const pageSize = getHalPageSize(doc)
+const totalElements = getHalPageTotalElements(doc)
+const totalPages = getHalPageTotalPages(doc)
 ```
+
+The page metadata getters return `undefined` when the resource has no `page` metadata.
+`createHalPageMetadata(number, size, totalElements)` calculates `totalPages` by rounding up; use a
+positive `size` (the function does not validate it). For zero elements, the total page count is
+zero.
 
 ## Changelog
 
