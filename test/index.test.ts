@@ -22,7 +22,7 @@ type Role = {
   name: string
 }
 
-type RoleResource = HalResource<Role, never>
+type RoleResource = Role & HalResource<never>
 
 type EmbeddedRoles = {
   roles: RoleResource[]
@@ -36,7 +36,7 @@ type UserLinks = HalLinks<{
   profile?: HalLink
 }>
 
-type UserResource = HalResource<User, EmbeddedRoles, UserLinks>
+type UserResource = User & HalResource<EmbeddedRoles, UserLinks>
 
 describe('HalResource', () => {
   const doc: UserResource = {
@@ -152,7 +152,7 @@ describe('HalPagedResource', () => {
   })
 })
 
-describe('createHalPageMetadata(number, size, totalElements)', () => {
+describe('createHalPageMetadata', () => {
   it('should calculate total pages when all pages are full', () => {
     expect(createHalPageMetadata(1, 10, 20)).toStrictEqual({
       number: 1,
@@ -231,7 +231,7 @@ describe('createHalPageLinks', () => {
   })
 })
 
-describe('createHalResource(resource, embedded, links)', () => {
+describe('createHalResource', () => {
   const user: User = {
     username: 'admin'
   }
@@ -270,7 +270,7 @@ describe('createHalResource(resource, embedded, links)', () => {
   })
 })
 
-describe('createHalPagedResource(embedded, page, links)', () => {
+describe('createHalPagedResource', () => {
   const embedded = {
     users: [
       { username: 'admin' },
@@ -283,17 +283,17 @@ describe('createHalPagedResource(embedded, page, links)', () => {
     totalElements: 2,
     totalPages: 1
   }
-  const links = {
-    self: { href: 'http://localhost/users?p=1' }
-  }
+  const baseUrl = 'http://localhost/users?'
 
   describe('with links', () => {
-    const doc = createHalPagedResource<{ users: UserResource[] }>(embedded, page, links)
+    const doc = createHalPagedResource<{
+      users: UserResource[]
+    }>(embedded, page, baseUrl)
 
     it('should return an HalPagedResource', () => {
       expect(doc.page).toStrictEqual(page)
       expect(doc._embedded).toStrictEqual(embedded)
-      expect(doc._links).toStrictEqual(links)
+      expect(doc._links).toStrictEqual(createHalPageLinks(baseUrl, page.number, page.size, page.totalPages))
     })
   })
 

@@ -31,14 +31,12 @@ export type HalLinks<L extends Links = Record<string, never>> = L & {
   self?: HalLink
 }
 
-export type HalDocument<E, L extends Links = Links> = {
+export type HalResource<E = any, L extends Links = Links> = {
   // https://datatracker.ietf.org/doc/html/draft-kelly-json-hal-08#section-4.1.2
   _embedded?: E
   // https://datatracker.ietf.org/doc/html/draft-kelly-json-hal-08#section-4.1.1
   _links?: HalLinks<L>
 }
-
-export type HalResource<R, E = any, L extends Links = Links> = R & HalDocument<E, L>
 
 export type HalPage = {
   number: number
@@ -54,27 +52,31 @@ export type HalPageLinks = HalLinks<{
   prev?: HalLink
 }>
 
-export type HalPagedResource<E> = HalResource<{
+export type HalPagedResource<E = any> = HalResource<E, HalPageLinks> & {
   page?: HalPage
-}, E, HalPageLinks>
+}
 
 /**
  * Creates a paged HAL resource.
  * @param embedded
  * @param page
- * @param links
+ * @param baseUrl
  */
-export function createHalPagedResource<E> (embedded: E, page: HalPage, links?: HalPageLinks): HalPagedResource<E> {
-  const res: HalPagedResource<E> = {
+export function createHalPagedResource<E> (embedded: E, page: HalPage, baseUrl?: string): HalPagedResource<E> {
+  const links = baseUrl == null
+    ? undefined
+    : createHalPageLinks(baseUrl, page.number, page.size, page.totalPages)
+
+  const resource: HalPagedResource<E> = {
     page,
     _embedded: embedded,
     _links: links
   }
 
-  if (links == null) {
-    delete res._links
+  if (baseUrl == null) {
+    delete resource._links
   }
-  return res
+  return resource
 }
 
 /**
@@ -106,7 +108,7 @@ export function createHalPageLinks (
 }
 
 /**
- * Create a page metadata for an HAL document.
+ * Create a page metadata for an HAL resource.
  * @param number
  * @param size
  * @param totalElements
@@ -126,8 +128,8 @@ export function createHalPageMetadata (number: number, size: number, totalElemen
  * @param embedded
  * @param links
  */
-export function createHalResource<R, E, L extends Links = Links> (resource: R, embedded?: E, links?: L): HalResource<R, E, L> {
-  const res: HalResource<R, E, L> = {
+export function createHalResource<T, E, L extends Links = Links> (resource: T, embedded?: E, links?: L): T & HalResource<E, L> {
+  const res: T & HalResource<E, L> = {
     ...resource,
     _embedded: embedded,
     _links: links
@@ -143,66 +145,66 @@ export function createHalResource<R, E, L extends Links = Links> (resource: R, e
 }
 
 /**
- * Returns embedded from an HAL document.
- * @param doc
+ * Returns embedded from an HAL resource.
+ * @param resource
  */
-export function getHalEmbedded<E, L extends Links> (doc: HalDocument<E, L>): E | undefined {
-  return doc._embedded
+export function getHalEmbedded<T, E, L extends Links = Links> (resource: T & HalResource<E, L>): E | undefined {
+  return resource._embedded
 }
 
 /**
- * Returns links from an HAL document.
- * @param doc
+ * Returns links from an HAL resource.
+ * @param resource
  */
-export function getHalLinks<E, L extends Links> (doc: HalDocument<E, L>): L | undefined {
-  return doc._links
+export function getHalLinks<T, E extends Record<string, unknown>, L extends Links = Links> (resource: T & HalResource<E, L>): L | undefined {
+  return resource._links
 }
 
 /**
- * Returns a specific link from an HAL document.
- * @param doc
+ * Returns a specific link from an HAL resource.
+ * @param resource
  * @param link
  */
-export function getHalLink<E, L extends Links> (doc: HalDocument<E, L>, link: keyof L): HalLinks<L>[keyof L] | undefined {
-  return doc._links?.[link]
+export function getHalLink<T, E, L extends Links = Links> (resource: T & HalResource<E, L>, link: keyof L): HalLinks<L>[keyof L] | undefined {
+  return resource._links?.[link]
 }
 
 /**
- * Returns page from an HAL document.
- * @param doc
+ * Returns page from an HAL resource.
+ * @param resource
  */
-export function getHalPage<E> (doc: HalPagedResource<E>): HalPage | undefined {
-  return doc.page
+export function getHalPage<T, E> (resource: T & HalPagedResource<E>): HalPage | undefined {
+  return resource.page
 }
 
 /**
- * Returns page number from an HAL document.
- * @param doc
+ * Returns page number from an HAL resource.
+ * @param resource
  */
-export function getHalPageNumber<E> (doc: HalPagedResource<E>): number | undefined {
-  return doc.page?.number
+export function getHalPageNumber<E> (resource: HalPagedResource<E>): number | undefined {
+  return resource.page?.number
 }
 
 /**
- * Returns page size from an HAL document.
- * @param doc
+ * Returns page size from an HAL resource.
+ * @param resource
  */
-export function getHalPageSize<E> (doc: HalPagedResource<E>): number | undefined {
-  return doc.page?.size
+export function getHalPageSize<E> (resource: HalPagedResource<E>): number | undefined {
+  return resource.page?.size
 }
 
 /**
- * Returns total elements from an HAL document.
- * @param doc
+ * Returns total elements from an HAL resource.
+ * @param resource
  */
-export function getHalPageTotalElements<E> (doc: HalPagedResource<E>): number | undefined {
-  return doc.page?.totalElements
+export function getHalPageTotalElements<E> (resource: HalPagedResource<E>): number | undefined {
+  return resource.page?.totalElements
 }
 
 /**
- * Returns total pages from an HAL document.
- * @param doc
+ * Returns total pages from an HAL resource.
+ * @param resource
  */
-export function getHalPageTotalPages<E> (doc: HalPagedResource<E>): number | undefined {
-  return doc.page?.totalPages
+export function getHalPageTotalPages<E> (resource: HalPagedResource<E>): number | undefined {
+  return resource.page?.totalPages
 }
