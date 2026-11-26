@@ -78,6 +78,49 @@ export function createHalPagedResource<E> (embedded: E, page: HalPage, links?: H
 }
 
 /**
+ * Creates links for an HAL resource.
+ * @param baseUrl
+ * @param number
+ * @param size
+ * @param totalPages
+ */
+export function createHalPageLinks (
+  baseUrl: string,
+  number: number,
+  size: number,
+  totalPages: number
+): HalPageLinks {
+  const createLink = (page: number) => {
+    const url = new URL(baseUrl)
+    url.searchParams.set('page', String(page))
+    url.searchParams.set('size', String(size))
+    return { href: url.toString() }
+  }
+  return {
+    self: createLink(number),
+    first: createLink(1),
+    last: createLink(Math.max(totalPages, 1)),
+    ...(number > 1 ? { prev: createLink(number - 1) } : {}),
+    ...(number < totalPages ? { next: createLink(number + 1) } : {})
+  }
+}
+
+/**
+ * Create a page metadata for an HAL document.
+ * @param number
+ * @param size
+ * @param totalElements
+ */
+export function createHalPageMetadata (number: number, size: number, totalElements: number): HalPage {
+  return {
+    number,
+    size,
+    totalElements,
+    totalPages: Math.ceil(totalElements / size)
+  }
+}
+
+/**
  * Creates an HAL resource.
  * @param resource
  * @param embedded
