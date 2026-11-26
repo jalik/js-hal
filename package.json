@@ -46,7 +46,8 @@
     "prepare": "npm run clean && npm run build",
     "prepublishOnly": "npm run lint && npm test",
     "preversion": "npm run prepublishOnly",
-    "test": "vitest run --passWithNoTests --coverage"
+    "test": "npm run typecheck && vitest run --passWithNoTests --coverage",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",
