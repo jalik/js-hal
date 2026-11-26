@@ -54,7 +54,7 @@
     "concurrently": "^10.0.7",
     "oxlint": "^1.95.0",
     "rimraf": "^6.1.4",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vitest": "^5.1.2"
   }
 }
