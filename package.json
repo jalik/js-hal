@@ -50,9 +50,6 @@
     "typecheck": "tsc -p tsconfig.test.json --noEmit"
   },
   "devDependencies": {
-    "@babel/cli": "^7.29.7",
-    "@babel/preset-env": "^7.29.14",
-    "@babel/preset-typescript": "^7.29.7",
     "@vitest/coverage-v8": "^5.1.2",
     "concurrently": "^10.0.7",
     "oxlint": "^1.95.0",
