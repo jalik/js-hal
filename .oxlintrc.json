@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "plugins": [
+    "import",
+    "typescript"
+  ],
+  "ignorePatterns": [
+    ".idea/",
+    "node_modules/",
+    "cjs/",
+    "esm/",
+    "coverage/"
+  ],
+  "rules": {
+    "typescript/ban-ts-comment": "warn",
+    "typescript/no-explicit-any": "warn"
+  }
+}
